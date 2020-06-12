@@ -109,7 +109,7 @@ VOID Main() {
         SDK::AActor* Actor = Actors->operator[](i);
 
         if (Actor != nullptr) {
-            if (Actor->IsA(SDK::APlayerPawn_Athena_Generic_C::StaticClass())) {
+            if (Actor->IsA(SDK::AFortPlayerPawnAthena::StaticClass())) {
                 // TODO: If this doesn't work, just call "PlayerController->Possess(reinterpret_cast<SDK::APawn*>(Actor));". But, it hangs the thread for some reason.
                 std::thread([PlayerController, Actor] { PlayerController->Possess(reinterpret_cast<SDK::APawn*>(Actor)); }, PlayerController, Actor);
 
