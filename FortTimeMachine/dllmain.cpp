@@ -19,6 +19,11 @@ SDK::TArray<SDK::AActor*>* Actors;
 
 SDK::APawn* Pawn;
 
+void Possess(SDK::APlayerController* PlayerController)
+{
+    PlayerController->Possess(Pawn);
+}
+
 BOOL MaskCompare(PVOID pBuffer, LPCSTR lpPattern, LPCSTR lpMask) {
     for (auto value = reinterpret_cast<PBYTE>(pBuffer); *lpMask; ++lpPattern, ++lpMask, ++value) {
         if (*lpMask == 'x' && *reinterpret_cast<LPCBYTE>(lpPattern) != *value)
@@ -102,23 +107,9 @@ VOID Main() {
 
     SDK::APlayerController* PlayerController = LocalPlayer->PlayerController;
 
-    printf("Initial HasBegunPlay = %i\n", (*World)->GameState->HasBegunPlay());
-    printf("Initial HasMatchStarted = %i\n", (*World)->GameState->HasMatchStarted());
+    //SDK::AFortFrontEndCameraManager* PlayerCameraManager = reinterpret_cast<SDK::AFortFrontEndCameraManager*>(PlayerController->PlayerCameraManager);
 
-    for (int i = 0; i < Actors->Num(); i++) {
-        SDK::AActor* Actor = Actors->operator[](i);
-
-        if (Actor != nullptr) {
-            if (Actor->IsA(SDK::AFortPlayerPawnAthena::StaticClass())) {
-                // TODO: If this doesn't work, just call "PlayerController->Possess(reinterpret_cast<SDK::APawn*>(Actor));". But, it hangs the thread for some reason.
-                std::thread([PlayerController, Actor] { PlayerController->Possess(reinterpret_cast<SDK::APawn*>(Actor)); }, PlayerController, Actor);
-
-                Pawn = reinterpret_cast<SDK::APawn*>(Actor);
-
-                break;
-            }
-        }
-    }
+   // PlayerCameraManager->SetCamera(SDK::EFrontEndCamera::TutorialPhaseThree);
 
     /*SDK::AGameMode* AuthorityGameMode = reinterpret_cast<SDK::AGameMode*>((*World)->AuthorityGameMode);
 
@@ -126,9 +117,45 @@ VOID Main() {
 
     AuthorityGameMode->StartMatch();
 
-    printf("Started match!\n");
+    printf("Started match!\n");*/
 
-    printf("After HasBegunPlay = %i\n", (*World)->GameState->HasBegunPlay());
+    //PlayerController->ClientSetHUD(SDK::AFortUIPvP::StaticClass());
+
+    //PlayerController->ClientSetCinematicMode(false, false, false, true);
+
+    //printf("MyHUD = %s\n", PlayerController->MyHUD->GetFullName().c_str());
+    //printf("PlayerController = %s\n", PlayerController->GetFullName().c_str());
+    //printf("PlayerCameraManager = %s\n", PlayerController->PlayerCameraManager->GetFullName().c_str());
+    //printf("PlayerCameraManagerClass = %s\n", PlayerController->PlayerCameraManagerClass->GetFullName().c_str());
+
+    /*printf("Initial HasBegunPlay = %i\n", (*World)->GameState->HasBegunPlay());
+    printf("Initial HasMatchStarted = %i\n", (*World)->GameState->HasMatchStarted());*/
+
+    //reinterpret_cast<SDK::AAthena_PlayerController_C*>(SDK::AAthena_PlayerController_C::StaticClass()->CreateDefaultObject());
+
+    for (int i = 0; i < Actors->Num(); i++) {
+        SDK::AActor* Actor = Actors->operator[](i);
+
+        if (Actor != nullptr) {
+            if (Actor->IsA(SDK::AFortPlayerPawnAthena::StaticClass())) {
+                SDK::AFortPlayerPawnAthena* FortPlayerPawnAthena = reinterpret_cast<SDK::AFortPlayerPawnAthena*>(Actor);
+
+                FortPlayerPawnAthena->SetFirstPersonCamera(true);
+
+                PlayerController->Possess(FortPlayerPawnAthena);
+                //Pawn = reinterpret_cast<SDK::APawn*>(Actor);
+
+                // TODO: If this doesn't work, just call "PlayerController->Possess(reinterpret_cast<SDK::APawn*>(Actor));". But, it hangs the thread for some reason.
+                //std::thread(&Possess, PlayerController);
+
+                //printf("Pog, it worked!");
+
+                break;
+            }
+        }
+    }
+
+    /*printf("After HasBegunPlay = %i\n", (*World)->GameState->HasBegunPlay());
     printf("After HasMatchStarted = %i\n", (*World)->GameState->HasMatchStarted());
 
     SDK::APlayerPawn_Athena_Generic_C* PlayerPawn_Athena_Generic = reinterpret_cast<SDK::APlayerPawn_Athena_Generic_C*>(Pawn);
