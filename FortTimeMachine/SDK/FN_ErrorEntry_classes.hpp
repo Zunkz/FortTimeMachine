@@ -30,7 +30,7 @@ public:
 	}
 
 
-	void Center_On_Widget(bool* Did_Center);
+	void Center_on_Widget(bool* Did_Center);
 	void SetErrorInfo(const struct FFortErrorInfo& ErrorInfo);
 	void GetButtonVisibility(ESlateVisibility* NewParam);
 	void Construct();

@@ -52,8 +52,8 @@ struct UOptionsMenuHudRotator_C_Update_Options_Params
 	TArray<struct FText>                               NewParam;                                                 // (Parm, OutParm, ZeroConstructor, ReferenceParm)
 };
 
-// Function OptionsMenuHudRotator.OptionsMenuHudRotator_C.Center On Widget
-struct UOptionsMenuHudRotator_C_Center_On_Widget_Params
+// Function OptionsMenuHudRotator.OptionsMenuHudRotator_C.Center on Widget
+struct UOptionsMenuHudRotator_C_Center_on_Widget_Params
 {
 };
 

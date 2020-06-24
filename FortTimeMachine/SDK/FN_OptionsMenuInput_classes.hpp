@@ -41,7 +41,7 @@ public:
 	bool IsItemExpanded();
 	class UObject* GetData();
 	void Change_Key(bool Primary_Key, const struct FText& Key_To_Sets);
-	void Center_On_Widget();
+	void Center_on_Widget();
 	void OnAcquireFromPool();
 	void OnReleaseToPool();
 	void Private_OnExpanderArrowShiftClicked();

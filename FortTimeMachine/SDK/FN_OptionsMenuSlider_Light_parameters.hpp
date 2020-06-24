@@ -14,8 +14,8 @@ namespace SDK
 //Parameters
 //---------------------------------------------------------------------------
 
-// Function OptionsMenuSlider_Light.OptionsMenuSlider_Light_C.Center On Widget
-struct UOptionsMenuSlider_Light_C_Center_On_Widget_Params
+// Function OptionsMenuSlider_Light.OptionsMenuSlider_Light_C.Center on Widget
+struct UOptionsMenuSlider_Light_C_Center_on_Widget_Params
 {
 };
 

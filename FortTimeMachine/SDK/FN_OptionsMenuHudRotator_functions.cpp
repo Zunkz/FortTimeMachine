@@ -143,14 +143,14 @@ void UOptionsMenuHudRotator_C::Update_Options(TArray<struct FText>* NewParam)
 }
 
 
-// Function OptionsMenuHudRotator.OptionsMenuHudRotator_C.Center On Widget
+// Function OptionsMenuHudRotator.OptionsMenuHudRotator_C.Center on Widget
 // (Public, BlueprintCallable, BlueprintEvent)
 
-void UOptionsMenuHudRotator_C::Center_On_Widget()
+void UOptionsMenuHudRotator_C::Center_on_Widget()
 {
-	static auto fn = UObject::FindObject<UFunction>("Function OptionsMenuHudRotator.OptionsMenuHudRotator_C.Center On Widget");
+	static auto fn = UObject::FindObject<UFunction>("Function OptionsMenuHudRotator.OptionsMenuHudRotator_C.Center on Widget");
 
-	UOptionsMenuHudRotator_C_Center_On_Widget_Params params;
+	UOptionsMenuHudRotator_C_Center_on_Widget_Params params;
 
 	auto flags = fn->FunctionFlags;
 

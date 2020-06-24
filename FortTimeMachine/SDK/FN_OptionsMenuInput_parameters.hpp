@@ -45,8 +45,8 @@ struct UOptionsMenuInput_C_Change_Key_Params
 	struct FText                                       Key_To_Sets;                                              // (Parm)
 };
 
-// Function OptionsMenuInput.OptionsMenuInput_C.Center On Widget
-struct UOptionsMenuInput_C_Center_On_Widget_Params
+// Function OptionsMenuInput.OptionsMenuInput_C.Center on Widget
+struct UOptionsMenuInput_C_Center_on_Widget_Params
 {
 };
 

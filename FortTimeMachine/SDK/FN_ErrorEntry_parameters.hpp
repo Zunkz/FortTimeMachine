@@ -14,8 +14,8 @@ namespace SDK
 //Parameters
 //---------------------------------------------------------------------------
 
-// Function ErrorEntry.ErrorEntry_C.Center On Widget
-struct UErrorEntry_C_Center_On_Widget_Params
+// Function ErrorEntry.ErrorEntry_C.Center on Widget
+struct UErrorEntry_C_Center_on_Widget_Params
 {
 	bool                                               Did_Center;                                               // (Parm, OutParm, ZeroConstructor, IsPlainOldData)
 };

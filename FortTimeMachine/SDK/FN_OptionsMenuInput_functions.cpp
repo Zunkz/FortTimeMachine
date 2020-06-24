@@ -118,14 +118,14 @@ void UOptionsMenuInput_C::Change_Key(bool Primary_Key, const struct FText& Key_T
 }
 
 
-// Function OptionsMenuInput.OptionsMenuInput_C.Center On Widget
+// Function OptionsMenuInput.OptionsMenuInput_C.Center on Widget
 // (Public, BlueprintCallable, BlueprintEvent)
 
-void UOptionsMenuInput_C::Center_On_Widget()
+void UOptionsMenuInput_C::Center_on_Widget()
 {
-	static auto fn = UObject::FindObject<UFunction>("Function OptionsMenuInput.OptionsMenuInput_C.Center On Widget");
+	static auto fn = UObject::FindObject<UFunction>("Function OptionsMenuInput.OptionsMenuInput_C.Center on Widget");
 
-	UOptionsMenuInput_C_Center_On_Widget_Params params;
+	UOptionsMenuInput_C_Center_on_Widget_Params params;
 
 	auto flags = fn->FunctionFlags;
 

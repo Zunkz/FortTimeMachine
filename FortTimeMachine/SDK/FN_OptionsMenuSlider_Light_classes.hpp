@@ -37,7 +37,7 @@ public:
 	}
 
 
-	void Center_On_Widget();
+	void Center_on_Widget();
 	void Update_Slider(const struct FText& Slider_Text, float Slider_Value, const struct FText& Hover_Text, class UCommonTextBlock* Tooltip_Text_Block);
 	void Construct();
 	void OnMouseLeave(struct FPointerEvent* MouseEvent);

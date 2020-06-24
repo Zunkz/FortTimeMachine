@@ -40,7 +40,7 @@ public:
 	class UObject* GetData();
 	struct FEventReply OnFocusReceived(struct FGeometry* MyGeometry, struct FFocusEvent* InFocusEvent);
 	void Update_Options(TArray<struct FText>* NewParam);
-	void Center_On_Widget();
+	void Center_on_Widget();
 	void Update_Row_Selector(int Currently_Selected);
 	void OnAcquireFromPool();
 	void OnReleaseToPool();

@@ -12,16 +12,16 @@ namespace SDK
 //Functions
 //---------------------------------------------------------------------------
 
-// Function ErrorEntry.ErrorEntry_C.Center On Widget
+// Function ErrorEntry.ErrorEntry_C.Center on Widget
 // (Public, HasOutParms, BlueprintCallable, BlueprintEvent)
 // Parameters:
 // bool                           Did_Center                     (Parm, OutParm, ZeroConstructor, IsPlainOldData)
 
-void UErrorEntry_C::Center_On_Widget(bool* Did_Center)
+void UErrorEntry_C::Center_on_Widget(bool* Did_Center)
 {
-	static auto fn = UObject::FindObject<UFunction>("Function ErrorEntry.ErrorEntry_C.Center On Widget");
+	static auto fn = UObject::FindObject<UFunction>("Function ErrorEntry.ErrorEntry_C.Center on Widget");
 
-	UErrorEntry_C_Center_On_Widget_Params params;
+	UErrorEntry_C_Center_on_Widget_Params params;
 
 	auto flags = fn->FunctionFlags;
 
