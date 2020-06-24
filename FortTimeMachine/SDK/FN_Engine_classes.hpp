@@ -4262,7 +4262,9 @@ public:
 class ULevel : public UObject
 {
 public:
-	unsigned char                                      UnknownData00[0x98];                                      // 0x0028(0x0098) MISSED OFFSET
+	unsigned char                                      UnknownData00[0x78];                                      // 0x0028(0x0078) MISSED OFFSET
+	TArray<class AActor*>							   Actors;                                                   // 0x00A0(0x0010)
+	unsigned char                                      UnknownData01[0x10];                                      // 0x00B0(0x0010) MISSED OFFSET
 	class UWorld*                                      OwningWorld;                                              // 0x00C0(0x0008) (ZeroConstructor, Transient, IsPlainOldData)
 	class UModel*                                      Model;                                                    // 0x00C8(0x0008) (ZeroConstructor, IsPlainOldData)
 	TArray<class UModelComponent*>                     ModelComponents;                                          // 0x00D0(0x0010) (ExportObject, ZeroConstructor)
@@ -4277,14 +4279,14 @@ public:
 	float                                              ShadowmapTotalSize;                                       // 0x011C(0x0004) (Edit, ZeroConstructor, EditConst, IsPlainOldData)
 	TArray<struct FVector>                             StaticNavigableGeometry;                                  // 0x0120(0x0010) (ZeroConstructor)
 	TArray<struct FGuid>                               StreamingTextureGuids;                                    // 0x0130(0x0010) (ZeroConstructor)
-	unsigned char                                      UnknownData01[0x88];                                      // 0x0140(0x0088) MISSED OFFSET
+	unsigned char                                      UnknownData02[0x88];                                      // 0x0140(0x0088) MISSED OFFSET
 	bool                                               bIsLightingScenario;                                      // 0x01C8(0x0001) (ZeroConstructor, IsPlainOldData)
-	unsigned char                                      UnknownData02[0x3];                                       // 0x01C9(0x0003) MISSED OFFSET
+	unsigned char                                      UnknownData03[0x3];                                       // 0x01C9(0x0003) MISSED OFFSET
 	struct FGuid                                       LevelBuildDataId;                                         // 0x01CC(0x0010) (IsPlainOldData)
-	unsigned char                                      UnknownData03[0x4];                                       // 0x01DC(0x0004) MISSED OFFSET
+	unsigned char                                      UnknownData04[0x4];                                       // 0x01DC(0x0004) MISSED OFFSET
 	class UMapBuildDataRegistry*                       MapBuildData;                                             // 0x01E0(0x0008) (ZeroConstructor, IsPlainOldData)
 	struct FIntVector                                  LightBuildLevelOffset;                                    // 0x01E8(0x000C)
-	unsigned char                                      UnknownData04 : 2;                                        // 0x01F4(0x0001)
+	unsigned char                                      UnknownData05 : 2;                                        // 0x01F4(0x0001)
 	unsigned char                                      bTextureStreamingRotationChanged : 1;                     // 0x01F4(0x0001)
 	unsigned char                                      bIsVisible : 1;                                           // 0x01F4(0x0001) (Transient)
 	unsigned char                                      bLocked : 1;                                              // 0x01F4(0x0001)
