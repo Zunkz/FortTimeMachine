@@ -97,6 +97,7 @@
     <ClCompile Include="SDK\FN_FortniteGame_functions.cpp" />
     <ClCompile Include="SDK\FN_FortniteUI_functions.cpp" />
     <ClCompile Include="SDK\FN_HUD_functions.cpp" />
+    <ClCompile Include="SDK\FN_HuskPawn_functions.cpp" />
     <ClCompile Include="SDK\FN_MainPlayerCamera_functions.cpp" />
     <ClCompile Include="SDK\FN_UMG_functions.cpp" />
   </ItemGroup>

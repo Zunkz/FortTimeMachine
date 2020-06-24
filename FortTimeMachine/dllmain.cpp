@@ -136,17 +136,15 @@ VOID Main() {
 
     Actors = &Level->Actors;
 
-    SDK::AFortPlayerControllerFrontEnd* FortPlayerControllerFrontEnd = reinterpret_cast<SDK::AFortPlayerControllerFrontEnd*>(FindActor(SDK::AFortPlayerControllerFrontEnd::StaticClass(), 0));
-    if (!FortPlayerControllerFrontEnd) {
-        printf("Finding FortPlayerControllerFrontEnd has failed, bailing-out immediately!\n");
+    SDK::APlayerController* PlayerController = LocalPlayer->PlayerController;
+
+    SDK::AHuskPawn_C* HuskPawn_C = reinterpret_cast<SDK::AHuskPawn_C*>(FindActor(SDK::AHuskPawn_C::StaticClass()));
+    if (!HuskPawn_C) {
+        printf("Finding HuskPawn_C has failed, bailing-out immediately!\n");
         return;
     }
 
-    SDK::AFortPlayerPawnAthena* FortPlayerPawnAthena = reinterpret_cast<SDK::AFortPlayerPawnAthena*>(FindActor(SDK::AFortPlayerPawnAthena::StaticClass()));
-    if (!FortPlayerPawnAthena) {
-        printf("Finding FortPlayerPawnAthena has failed, bailing-out immediately!\n");
-        return;
-    }
+    PlayerController->Possess(HuskPawn_C);
 
     /*Athena_PlayerController_C->bPlayerIsWaiting = 0;
 
@@ -219,14 +217,6 @@ VOID Main() {
 
     Athena_PlayerController_C->ServerClientPawnLoaded(true);
     Athena_PlayerController_C->ClientFinishedInteractionInZone();*/
-
-    SwitchController(LocalPlayer->PlayerController->Player, FortPlayerControllerFrontEnd);
-
-    printf("PlayerController = %s\n", LocalPlayer->PlayerController->GetFullName().c_str());
-
-    Sleep(10000);
-
-    Possess(LocalPlayer->PlayerController, FortPlayerPawnAthena);
 
     /*SDK::AMainPlayerCamera_C* MainPlayerCamera_C = reinterpret_cast<SDK::AMainPlayerCamera_C*>(FindActor(SDK::AMainPlayerCamera_C::StaticClass()));
     if (!MainPlayerCamera_C) {
