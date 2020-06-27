@@ -34,14 +34,14 @@ void URotatorSelector_C::Update_Options(TArray<struct FText>* NewParam)
 }
 
 
-// Function RotatorSelector.RotatorSelector_C.Center on Widget
+// Function RotatorSelector.RotatorSelector_C.Center On Widget
 // (Public, BlueprintCallable, BlueprintEvent)
 
-void URotatorSelector_C::Center_on_Widget()
+void URotatorSelector_C::Center_On_Widget()
 {
-	static auto fn = UObject::FindObject<UFunction>("Function RotatorSelector.RotatorSelector_C.Center on Widget");
+	static auto fn = UObject::FindObject<UFunction>("Function RotatorSelector.RotatorSelector_C.Center On Widget");
 
-	URotatorSelector_C_Center_on_Widget_Params params;
+	URotatorSelector_C_Center_On_Widget_Params params;
 
 	auto flags = fn->FunctionFlags;
 

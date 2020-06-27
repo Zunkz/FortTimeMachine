@@ -4286,15 +4286,14 @@ public:
 	unsigned char                                      UnknownData04[0x4];                                       // 0x01DC(0x0004) MISSED OFFSET
 	class UMapBuildDataRegistry*                       MapBuildData;                                             // 0x01E0(0x0008) (ZeroConstructor, IsPlainOldData)
 	struct FIntVector                                  LightBuildLevelOffset;                                    // 0x01E8(0x000C)
-	unsigned char                                      UnknownData05 : 2;                                        // 0x01F4(0x0001)
 	unsigned char                                      bTextureStreamingRotationChanged : 1;                     // 0x01F4(0x0001)
 	unsigned char                                      bIsVisible : 1;                                           // 0x01F4(0x0001) (Transient)
 	unsigned char                                      bLocked : 1;                                              // 0x01F4(0x0001)
-	unsigned char                                      UnknownData06[0xFB];                                      // 0x01F5(0x00FB) MISSED OFFSET
+	unsigned char                                      UnknownData05[0xFB];                                      // 0x01F5(0x00FB) MISSED OFFSET
 	class AWorldSettings*                              WorldSettings;                                            // 0x02F0(0x0008) (ZeroConstructor, IsPlainOldData)
-	unsigned char                                      UnknownData07[0x8];                                       // 0x02F8(0x0008) MISSED OFFSET
+	unsigned char                                      UnknownData06[0x8];                                       // 0x02F8(0x0008) MISSED OFFSET
 	TArray<class UAssetUserData*>                      AssetUserData;                                            // 0x0300(0x0010) (ExportObject, ZeroConstructor)
-	unsigned char                                      UnknownData08[0x10];                                      // 0x0310(0x0010) MISSED OFFSET
+	unsigned char                                      UnknownData07[0x10];                                      // 0x0310(0x0010) MISSED OFFSET
 
 	static UClass* StaticClass()
 	{

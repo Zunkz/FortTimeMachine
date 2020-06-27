@@ -12,14 +12,14 @@ namespace SDK
 //Functions
 //---------------------------------------------------------------------------
 
-// Function OptionsMenuSlider_Light.OptionsMenuSlider_Light_C.Center on Widget
+// Function OptionsMenuSlider_Light.OptionsMenuSlider_Light_C.Center On Widget
 // (Public, BlueprintCallable, BlueprintEvent)
 
-void UOptionsMenuSlider_Light_C::Center_on_Widget()
+void UOptionsMenuSlider_Light_C::Center_On_Widget()
 {
-	static auto fn = UObject::FindObject<UFunction>("Function OptionsMenuSlider_Light.OptionsMenuSlider_Light_C.Center on Widget");
+	static auto fn = UObject::FindObject<UFunction>("Function OptionsMenuSlider_Light.OptionsMenuSlider_Light_C.Center On Widget");
 
-	UOptionsMenuSlider_Light_C_Center_on_Widget_Params params;
+	UOptionsMenuSlider_Light_C_Center_On_Widget_Params params;
 
 	auto flags = fn->FunctionFlags;
 

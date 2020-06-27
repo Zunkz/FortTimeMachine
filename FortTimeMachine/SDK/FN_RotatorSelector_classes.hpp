@@ -34,7 +34,7 @@ public:
 
 
 	void Update_Options(TArray<struct FText>* NewParam);
-	void Center_on_Widget();
+	void Center_On_Widget();
 	void Initialize(const struct FText& Display_Text, const struct FText& Hover_Text, class UCommonTextBlock* Tab_Tooltip, TArray<struct FText>* Options);
 	void Update_Row_Selector(int Currently_Selected);
 	void Construct();

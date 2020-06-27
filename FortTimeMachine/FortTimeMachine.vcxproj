@@ -91,15 +91,9 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="SDK\FN_Athena_PlayerController_functions.cpp" />
     <ClCompile Include="SDK\FN_Basic.cpp" />
-    <ClCompile Include="SDK\FN_CommonUI_functions.cpp" />
     <ClCompile Include="SDK\FN_CoreUObject_functions.cpp" />
     <ClCompile Include="SDK\FN_Engine_functions.cpp" />
     <ClCompile Include="SDK\FN_FortniteGame_functions.cpp" />
-    <ClCompile Include="SDK\FN_FortniteUI_functions.cpp" />
-    <ClCompile Include="SDK\FN_HUD_functions.cpp" />
-    <ClCompile Include="SDK\FN_HuskPawn_functions.cpp" />
-    <ClCompile Include="SDK\FN_MainPlayerCamera_functions.cpp" />
-    <ClCompile Include="SDK\FN_UMG_functions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SDK.hpp" />

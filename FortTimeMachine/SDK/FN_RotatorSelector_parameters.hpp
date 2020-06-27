@@ -20,8 +20,8 @@ struct URotatorSelector_C_Update_Options_Params
 	TArray<struct FText>                               NewParam;                                                 // (Parm, OutParm, ZeroConstructor, ReferenceParm)
 };
 
-// Function RotatorSelector.RotatorSelector_C.Center on Widget
-struct URotatorSelector_C_Center_on_Widget_Params
+// Function RotatorSelector.RotatorSelector_C.Center On Widget
+struct URotatorSelector_C_Center_On_Widget_Params
 {
 };
 
