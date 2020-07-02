@@ -137,7 +137,14 @@ VOID Main() {
         SDK::AActor* Actor = Actors->operator[](i);
 
         if (Actor != nullptr) {
-            if (Actor->IsA(SDK::AFortPlayerPawnAthena::StaticClass())) {
+			if (Actor->IsA(SDK::AFortPlayerPawn::StaticClass())) {
+				SDK::AFortPlayerPawn* FortPlayerPawn = reinterpret_cast<SDK::AFortPlayerPawn*>(Actor);
+
+				FortPlayerPawn->SetFirstPersonCamera(false);
+
+				PlayerController->Possess(FortPlayerPawn);
+			}
+            else if (Actor->IsA(SDK::AFortPlayerPawnAthena::StaticClass())) {
                 SDK::AFortPlayerPawnAthena* FortPlayerPawnAthena = reinterpret_cast<SDK::AFortPlayerPawnAthena*>(Actor);
 
                 FortPlayerPawnAthena->SetFirstPersonCamera(true);

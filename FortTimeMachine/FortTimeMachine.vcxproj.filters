@@ -33,6 +33,9 @@
     <ClCompile Include="SDK\FN_Athena_PlayerController_functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SDK\FN_PlayerPawn_Generic_functions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SDK.hpp">

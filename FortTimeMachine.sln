@@ -1,16 +1,22 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30104.148
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.1022
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FortTimeMachine", "FortTimeMachine\FortTimeMachine.vcxproj", "{681F9315-7563-43DC-A2AB-0C4122002E2F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug Athena|x64 = Debug Athena|x64
+		Debug StW|x64 = Debug StW|x64
 		Debug|x64 = Debug|x64
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{681F9315-7563-43DC-A2AB-0C4122002E2F}.Debug Athena|x64.ActiveCfg = Debug Athena|x64
+		{681F9315-7563-43DC-A2AB-0C4122002E2F}.Debug Athena|x64.Build.0 = Debug Athena|x64
+		{681F9315-7563-43DC-A2AB-0C4122002E2F}.Debug StW|x64.ActiveCfg = Debug StW|x64
+		{681F9315-7563-43DC-A2AB-0C4122002E2F}.Debug StW|x64.Build.0 = Debug StW|x64
 		{681F9315-7563-43DC-A2AB-0C4122002E2F}.Debug|x64.ActiveCfg = Debug|x64
 		{681F9315-7563-43DC-A2AB-0C4122002E2F}.Debug|x64.Build.0 = Debug|x64
 		{681F9315-7563-43DC-A2AB-0C4122002E2F}.Release|x64.ActiveCfg = Release|x64
