@@ -3,9 +3,11 @@
 #include <windows.h>
 #include <inttypes.h>
 #include <stdio.h>
-#include <psapi.h>
-#include <cstdint>
-#include <thread>
+
+#include "util.h"
+
+#include <MinHook.h>
+#pragma comment(lib, "minhook.lib")
 
 SDK::UWorld** World;
 SDK::ULevel* Level;
@@ -17,84 +19,134 @@ SDK::ULocalPlayer* LocalPlayer;
 
 SDK::TArray<SDK::AActor*>* Actors;
 
-SDK::APawn* Pawn;
+PVOID(*ProcessEvent)(SDK::UObject*, class SDK::UFunction*, PVOID) = nullptr;
 
-void Possess(SDK::APlayerController* PlayerController)
-{
-    PlayerController->Possess(Pawn);
-}
+PVOID ProcessEventHook(SDK::UObject* object, class SDK::UFunction* function, PVOID params) {
+    if (object && function) {
+        bool bInvalidate = false;
 
-BOOL MaskCompare(PVOID pBuffer, LPCSTR lpPattern, LPCSTR lpMask) {
-    for (auto value = reinterpret_cast<PBYTE>(pBuffer); *lpMask; ++lpPattern, ++lpMask, ++value) {
-        if (*lpMask == 'x' && *reinterpret_cast<LPCBYTE>(lpPattern) != *value)
-            return false;
+        if (function->GetName().find("RecieveTick") != std::string::npos)
+            bInvalidate = true;
+        if (function->GetName().find("ReceiveTick") != std::string::npos)
+            bInvalidate = true;
+        if (function->GetName().find("BlueprintUpdateAnimation") != std::string::npos)
+            bInvalidate = true;
+        if (function->GetName().find("BlueprintPostEvaluateAnimation") != std::string::npos)
+            bInvalidate = true;
+        if (function->GetName().find("ExecuteUbergraph") != std::string::npos)
+            bInvalidate = true;
+        if (function->GetName().find("Loop Animation Curve") != std::string::npos)
+            bInvalidate = true;
+        if (function->GetName().find("OnMouseEnter") != std::string::npos)
+            bInvalidate = true;
+        if (function->GetName().find("OnMouseLeave") != std::string::npos)
+            bInvalidate = true;
+        if (function->GetName().find("OnMouseMove") != std::string::npos)
+            bInvalidate = true;
+        if (function->GetName() == "Tick")
+            bInvalidate = true;
+        if (function->GetName() == "GetValue")
+            bInvalidate = true;
+        if (function->GetName() == "OnPaint")
+            bInvalidate = true;
+        if (function->GetName() == "ReadyToEndMatch")
+            bInvalidate = true;
+        if (function->GetName() == "OnUpdateDirectionalLightForTimeOfDay")
+            bInvalidate = true;
+        if (function->GetName() == "ContrailCheck")
+            bInvalidate = true;
+        if (function->GetName() == "ReceiveDrawHUD")
+            bInvalidate = true;
+        if (function->GetName() == "ShouldShowEmptyImage")
+            bInvalidate = true;
+        if (function->GetName() == "GetSubtitleVisibility")
+            bInvalidate = true;
+
+        if (!bInvalidate) {
+            printf("%s %s\n", object->GetFullName().c_str(), function->GetFullName().c_str());
+        }
     }
 
-    return true;
+    return ProcessEvent(object, function, params);
 }
 
-VOID InitConsole() {
-    AllocConsole();
+SDK::AActor* FindActor(SDK::UClass* pClass, int iSkipCount = 0) {
+    int iSkipIndex = 0;
 
-    FILE* pFile;
-    freopen_s(&pFile, "CONOUT$", "w", stdout);
-}
+    for (int i = 0; i < Actors->Num(); i++) {
+        SDK::AActor* pActor = Actors->operator[](i);
 
-PBYTE FindPattern(PVOID pBase, DWORD dwSize, LPCSTR lpPattern, LPCSTR lpMask) {
-    dwSize -= static_cast<DWORD>(strlen(lpMask));
-
-    for (auto index = 0UL; index < dwSize; ++index) {
-        auto pAddress = reinterpret_cast<PBYTE>(pBase) + index;
-
-        if (MaskCompare(pAddress, lpPattern, lpMask))
-            return pAddress;
+        if (pActor != nullptr) {
+            if (pActor->IsA(pClass)) {
+                if (iSkipIndex >= iSkipCount)
+                    return pActor;
+                else {
+                    iSkipIndex++;
+                    continue;
+                }
+            }
+        }
     }
 
-    return NULL;
+    return nullptr;
 }
 
-PBYTE FindPattern(LPCSTR lpPattern, LPCSTR lpMask) {
-    MODULEINFO info = { 0 };
+DWORD WINAPI Main(LPVOID lpParam) {
+    Util::InitConsole();
 
-    GetModuleInformation(GetCurrentProcess(), GetModuleHandle(0), &info, sizeof(info));
+    printf("Aurora: Time Machine by Cyuubi, with help from others.\n");
+    printf("Credits: Crush, Taj, Samicc, Kanner, Pivot and Cendence.\n\n");
 
-    return FindPattern(info.lpBaseOfDll, info.SizeOfImage, lpPattern, lpMask);
-}
+    printf("Thank you all for helping, this wouldn't have been possible without you!\n");
 
-VOID Main() {
-    InitConsole();
+    //MH_Initialize();
 
-    printf("FN-TimeMachine by Cyuubi\n");
-
-    auto pUWorldAddress = FindPattern("\x48\x8B\x1D\x00\x00\x00\x00\x00\x00\x00\x10\x4C\x8D\x4D\x00\x4C", "xxx???????xxxx?x");
+    auto pUWorldAddress = Util::FindPattern("\x48\x8B\x1D\x00\x00\x00\x00\x00\x00\x00\x10\x4C\x8D\x4D\x00\x4C", "xxx???????xxxx?x");
     if (!pUWorldAddress) {
         printf("Finding pattern for UWorld has failed, bailing-out immediately!\n");
-        return;
+        return 0;
     }
 
     auto pUWorldOffset = *reinterpret_cast<uint32_t*>(pUWorldAddress + 3);
 
     World = reinterpret_cast<SDK::UWorld**>(pUWorldAddress + 7 + pUWorldOffset);
 
-    auto pGObjectAddress = FindPattern("\x48\x8D\x0D\x00\x00\x00\x00\xE8\x00\x00\x00\x00\xE8\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x48\x8B\xD6", "xxx????x????x????x????xxx");
+    auto pGObjectAddress = Util::FindPattern("\x48\x8D\x0D\x00\x00\x00\x00\xE8\x00\x00\x00\x00\xE8\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x48\x8B\xD6", "xxx????x????x????x????xxx");
     if (!pGObjectAddress) {
         printf("Finding pattern for GObject has failed, bailing-out immediately!\n");
-        return;
+        return 0;
     }
 
     auto pGObjectOffset = *reinterpret_cast<uint32_t*>(pGObjectAddress + 3);
 
     SDK::UObject::GObjects = reinterpret_cast<SDK::FUObjectArray*>(pGObjectAddress + 7 + pGObjectOffset);
 
-    auto pGNameAddress = FindPattern("\x48\x8B\x05\x00\x00\x00\x00\x48\x85\xC0\x75\x50\xB9\x00\x00\x00\x00\x48\x89\x5C\x24", "xxx????xxxxxx????xxxx");
+    auto pGNameAddress = Util::FindPattern("\x48\x8B\x05\x00\x00\x00\x00\x48\x85\xC0\x75\x50\xB9\x00\x00\x00\x00\x48\x89\x5C\x24", "xxx????xxxxxx????xxxx");
     if (!pGNameAddress) {
         printf("Finding pattern for GName has failed, bailing-out immediately!\n");
-        return;
+        return 0;
     }
 
     auto pGNameOffset = *reinterpret_cast<uint32_t*>(pGNameAddress + 3);
 
     SDK::FName::GNames = *reinterpret_cast<SDK::TNameEntryArray**>(pGNameAddress + 7 + pGNameOffset);
+
+    auto pPossessAddress = Util::FindPattern("\x48\x89\x5C\x24\x10\x55\x56\x57\x48\x8D\x6C\x24\x90", "xxxxxxxxxxxxx");
+    if (!pPossessAddress) {
+        printf("Finding pattern for Possess has failed, bailing-out immediately!\n");
+        return 0;
+    }
+
+    Possess = reinterpret_cast<decltype(Possess)>(pPossessAddress);
+
+    auto pProcessEventAddress = Util::FindPattern("\x40\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x00\x00\x00\x00\x48\x8D\x6C\x24\x00\x48\x89\x9D\x00\x00\x00\x00\x48\x8B\x05\x00\x00\x00\x00\x48\x33\xC5\x48\x89\x85\x00\x00\x00\x00\x48\x63\x41\x0C", "xxxxxxxxxxxxxxx????xxxx?xxx????xxx????xxxxxx????xxxx");
+    if (!pProcessEventAddress) {
+        printf("Finding pattern for ProcessEvent has failed, bailing-out immediately!\n");
+        return 0;
+    }
+
+    //MH_CreateHook(reinterpret_cast<LPVOID>(pProcessEventAddress), ProcessEventHook, (PVOID*)&ProcessEvent);
+    //MH_EnableHook(reinterpret_cast<LPVOID>(pProcessEventAddress));
 
     Level = (*World)->PersistentLevel;
 
@@ -107,68 +159,42 @@ VOID Main() {
 
     SDK::APlayerController* PlayerController = LocalPlayer->PlayerController;
 
-    //SDK::AFortFrontEndCameraManager* PlayerCameraManager = reinterpret_cast<SDK::AFortFrontEndCameraManager*>(PlayerController->PlayerCameraManager);
-
-   // PlayerCameraManager->SetCamera(SDK::EFrontEndCamera::TutorialPhaseThree);
-
-    /*SDK::AGameMode* AuthorityGameMode = reinterpret_cast<SDK::AGameMode*>((*World)->AuthorityGameMode);
-
-    printf("Starting match...\n");
-
-    AuthorityGameMode->StartMatch();
-
-    printf("Started match!\n");*/
-
-    //PlayerController->ClientSetHUD(SDK::AFortUIPvP::StaticClass());
-
-    //PlayerController->ClientSetCinematicMode(false, false, false, true);
-
-    //printf("MyHUD = %s\n", PlayerController->MyHUD->GetFullName().c_str());
-    //printf("PlayerController = %s\n", PlayerController->GetFullName().c_str());
-    //printf("PlayerCameraManager = %s\n", PlayerController->PlayerCameraManager->GetFullName().c_str());
-    //printf("PlayerCameraManagerClass = %s\n", PlayerController->PlayerCameraManagerClass->GetFullName().c_str());
-
-    /*printf("Initial HasBegunPlay = %i\n", (*World)->GameState->HasBegunPlay());
-    printf("Initial HasMatchStarted = %i\n", (*World)->GameState->HasMatchStarted());*/
-
-    //reinterpret_cast<SDK::AAthena_PlayerController_C*>(SDK::AAthena_PlayerController_C::StaticClass()->CreateDefaultObject());
-
-    for (int i = 0; i < Actors->Num(); i++) {
-        SDK::AActor* Actor = Actors->operator[](i);
-
-        if (Actor != nullptr) {
-            if (Actor->IsA(SDK::AFortPlayerPawnAthena::StaticClass())) {
-                SDK::AFortPlayerPawnAthena* FortPlayerPawnAthena = reinterpret_cast<SDK::AFortPlayerPawnAthena*>(Actor);
-
-                FortPlayerPawnAthena->SetFirstPersonCamera(true);
-
-                PlayerController->Possess(FortPlayerPawnAthena);
-                //Pawn = reinterpret_cast<SDK::APawn*>(Actor);
-
-                // TODO: If this doesn't work, just call "PlayerController->Possess(reinterpret_cast<SDK::APawn*>(Actor));". But, it hangs the thread for some reason.
-                //std::thread(&Possess, PlayerController);
-
-                //printf("Pog, it worked!");
-
-                break;
-            }
-        }
+    SDK::APlayerPawn_Athena_C* PlayerPawn_Athena_C = reinterpret_cast<SDK::APlayerPawn_Athena_C*>(FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
+    if (!PlayerPawn_Athena_C) {
+        printf("Finding PlayerPawn_Athena_C has failed, bailing-out immediately!\n");
+        return 0;
     }
 
-    /*printf("After HasBegunPlay = %i\n", (*World)->GameState->HasBegunPlay());
-    printf("After HasMatchStarted = %i\n", (*World)->GameState->HasMatchStarted());
+    pPossessParams PossessParams = (pPossessParams)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MyPossessParams));
 
-    SDK::APlayerPawn_Athena_Generic_C* PlayerPawn_Athena_Generic = reinterpret_cast<SDK::APlayerPawn_Athena_Generic_C*>(Pawn);
+    PossessParams->pInstance = PlayerController;
+    PossessParams->pPawn = PlayerPawn_Athena_C;
 
-    PlayerPawn_Athena_Generic->CharacterGender = SDK::EFortCustomGender::Male;
-    PlayerPawn_Athena_Generic->CharacterBodyType = SDK::EFortCustomBodyType::Small;
+    CreateThread(0, 0, Util::PossessWithThread, PossessParams, 0, 0);
 
-    printf("IsDBNO = %i\n", PlayerPawn_Athena_Generic->IsDBNO());*/
+    printf("Waiting 5 seconds, for game to process possess.\n");
+
+    Sleep(5000);
+
+    reinterpret_cast<SDK::AFortPlayerController*>(PlayerController)->bReadyToStartMatch = true;
+
+    SDK::AFortGameModeAthena* AuthorityGameMode = reinterpret_cast<SDK::AFortGameModeAthena*>((*World)->AuthorityGameMode);
+
+    AuthorityGameMode->StartPlay();
+    AuthorityGameMode->StartMatch();
+
+    std::string NewHeroID = "Hero:HID_001_Athena_Commando_F";
+
+    reinterpret_cast<SDK::AFortPlayerController*>(PlayerController)->ServerSetHero(SDK::FString(std::wstring(NewHeroID.begin(), NewHeroID.end()).c_str()));
+
+    PlayerPawn_Athena_C->OnCharacterPartsReinitialized();
+
+    return 0;
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved) {
     if (dwReason == DLL_PROCESS_ATTACH)
-        Main();
+        CreateThread(0, 0, Main, hModule, 0, 0);
 
     return true;
 }
