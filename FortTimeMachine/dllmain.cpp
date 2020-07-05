@@ -19,11 +19,53 @@ SDK::ULocalPlayer* LocalPlayer;
 
 SDK::TArray<SDK::AActor*>* Actors;
 
+SDK::APlayerController* PlayerController;
+
+SDK::AActor* FindActor(SDK::UClass* pClass, int iSkipCount = 0) {
+    int iSkipIndex = 0;
+
+    for (int i = 0; i < Actors->Num(); i++) {
+        SDK::AActor* pActor = Actors->operator[](i);
+
+        if (pActor != nullptr) {
+            if (pActor->IsA(pClass)) {
+                if (iSkipIndex >= iSkipCount)
+                    return pActor;
+                else {
+                    iSkipIndex++;
+                    continue;
+                }
+            }
+        }
+    }
+
+    return nullptr;
+}
+
 PVOID(*ProcessEvent)(SDK::UObject*, class SDK::UFunction*, PVOID) = nullptr;
 
 PVOID ProcessEventHook(SDK::UObject* object, class SDK::UFunction* function, PVOID params) {
     if (object && function) {
-        bool bInvalidate = false;
+        if (function->GetName().find("ServerAttemptAircraftJump") != std::string::npos) {
+            std::string ClassName = "PlayerPawn_Athena_C";
+            
+            PlayerController->CheatManager->Summon(SDK::FString(std::wstring(ClassName.begin(), ClassName.end()).c_str()));
+
+            SDK::APlayerPawn_Athena_C* PlayerPawn_Athena_C = reinterpret_cast<SDK::APlayerPawn_Athena_C*>(FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
+            if (!PlayerPawn_Athena_C) {
+                printf("Finding PlayerPawn_Athena_C has failed, bailing-out immediately!\n");
+                return 0;
+            }
+
+            pPossessParams PossessParams = (pPossessParams)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MyPossessParams));
+
+            PossessParams->pInstance = PlayerController;
+            PossessParams->pPawn = PlayerPawn_Athena_C;
+
+            CreateThread(0, 0, Util::PossessWithThread, PossessParams, 0, 0);
+        }
+
+        /*bool bInvalidate = false;
 
         if (function->GetName().find("RecieveTick") != std::string::npos)
             bInvalidate = true;
@@ -64,31 +106,10 @@ PVOID ProcessEventHook(SDK::UObject* object, class SDK::UFunction* function, PVO
 
         if (!bInvalidate) {
             printf("%s %s\n", object->GetFullName().c_str(), function->GetFullName().c_str());
-        }
+        }*/
     }
 
     return ProcessEvent(object, function, params);
-}
-
-SDK::AActor* FindActor(SDK::UClass* pClass, int iSkipCount = 0) {
-    int iSkipIndex = 0;
-
-    for (int i = 0; i < Actors->Num(); i++) {
-        SDK::AActor* pActor = Actors->operator[](i);
-
-        if (pActor != nullptr) {
-            if (pActor->IsA(pClass)) {
-                if (iSkipIndex >= iSkipCount)
-                    return pActor;
-                else {
-                    iSkipIndex++;
-                    continue;
-                }
-            }
-        }
-    }
-
-    return nullptr;
 }
 
 DWORD WINAPI Main(LPVOID lpParam) {
@@ -99,7 +120,7 @@ DWORD WINAPI Main(LPVOID lpParam) {
 
     printf("Thank you all for helping, this wouldn't have been possible without you!\n");
 
-    //MH_Initialize();
+    MH_Initialize();
 
     auto pUWorldAddress = Util::FindPattern("\x48\x8B\x1D\x00\x00\x00\x00\x00\x00\x00\x10\x4C\x8D\x4D\x00\x4C", "xxx???????xxxx?x");
     if (!pUWorldAddress) {
@@ -145,8 +166,8 @@ DWORD WINAPI Main(LPVOID lpParam) {
         return 0;
     }
 
-    //MH_CreateHook(reinterpret_cast<LPVOID>(pProcessEventAddress), ProcessEventHook, (PVOID*)&ProcessEvent);
-    //MH_EnableHook(reinterpret_cast<LPVOID>(pProcessEventAddress));
+    MH_CreateHook(reinterpret_cast<LPVOID>(pProcessEventAddress), ProcessEventHook, (PVOID*)&ProcessEvent);
+    MH_EnableHook(reinterpret_cast<LPVOID>(pProcessEventAddress));
 
     Level = (*World)->PersistentLevel;
 
@@ -157,7 +178,7 @@ DWORD WINAPI Main(LPVOID lpParam) {
 
     Actors = &Level->Actors;
 
-    SDK::APlayerController* PlayerController = LocalPlayer->PlayerController;
+    PlayerController = LocalPlayer->PlayerController;
 
     SDK::APlayerPawn_Athena_C* PlayerPawn_Athena_C = reinterpret_cast<SDK::APlayerPawn_Athena_C*>(FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
     if (!PlayerPawn_Athena_C) {
@@ -172,22 +193,14 @@ DWORD WINAPI Main(LPVOID lpParam) {
 
     CreateThread(0, 0, Util::PossessWithThread, PossessParams, 0, 0);
 
-    printf("Waiting 5 seconds, for game to process possess.\n");
+    Sleep(1000);
 
-    Sleep(5000);
-
-    reinterpret_cast<SDK::AFortPlayerController*>(PlayerController)->bReadyToStartMatch = true;
+    reinterpret_cast<SDK::AFortPlayerController*>(PlayerController)->ServerReadyToStartMatch();
 
     SDK::AFortGameModeAthena* AuthorityGameMode = reinterpret_cast<SDK::AFortGameModeAthena*>((*World)->AuthorityGameMode);
 
     AuthorityGameMode->StartPlay();
     AuthorityGameMode->StartMatch();
-
-    std::string NewHeroID = "Hero:HID_001_Athena_Commando_F";
-
-    reinterpret_cast<SDK::AFortPlayerController*>(PlayerController)->ServerSetHero(SDK::FString(std::wstring(NewHeroID.begin(), NewHeroID.end()).c_str()));
-
-    PlayerPawn_Athena_C->OnCharacterPartsReinitialized();
 
     return 0;
 }
