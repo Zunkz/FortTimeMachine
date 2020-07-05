@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <tchar.h>
 
 #include "util.h"
 
@@ -40,6 +41,20 @@ SDK::AActor* FindActor(SDK::UClass* pClass, int iSkipCount = 0) {
     }
 
     return nullptr;
+}
+
+// scuffed af but i dont careeee
+SDK::UObject*(*StaticLoadObject)(SDK::UClass* ObjectClass, SDK::UObject* InOuter, const TCHAR* InName, const TCHAR* Filename, uint32_t LoadFlags, SDK::UPackageMap* Sandbox, bool bAllowObjectReconciliation) = nullptr;
+
+template<class T>
+T* LoadObject(SDK::UObject* Outer, const TCHAR* Name, const TCHAR* Filename = nullptr, uint32_t LoadFlags = 0, SDK::UPackageMap* Sandbox = nullptr) {
+    return (T*)StaticLoadObject(T::StaticClass(), Outer, Name, Filename, LoadFlags, Sandbox, true);
+}
+
+// TODO: Accurately match original func
+template<typename T>
+T* FindOrLoadObject(const TCHAR* PathName) {
+    return LoadObject<T>(NULL, PathName);
 }
 
 PVOID(*ProcessEvent)(SDK::UObject*, class SDK::UFunction*, PVOID) = nullptr;
@@ -103,6 +118,14 @@ PVOID ProcessEventHook(SDK::UObject* object, class SDK::UFunction* function, PVO
             bInvalidate = true;
         if (function->GetName() == "GetSubtitleVisibility")
             bInvalidate = true;
+        if (function->GetName() == "Clown Spinner")
+            bInvalidate = true;
+        if (function->GetName() == "StartTickingIfRendered")
+            bInvalidate = true;
+        if (function->GetName() == "BlueprintModifyCamera")
+            bInvalidate = true;
+        if (function->GetName() == "BlueprintModifyPostProcess")
+            bInvalidate = true;
 
         if (!bInvalidate) {
             printf("%s %s\n", object->GetFullName().c_str(), function->GetFullName().c_str());
@@ -121,6 +144,12 @@ DWORD WINAPI Main(LPVOID lpParam) {
     printf("Thank you all for helping, this wouldn't have been possible without you!\n");
 
     MH_Initialize();
+
+    auto pBaseAddress = (uintptr_t)GetModuleHandle(TEXT("FortniteClient-Win64-Shipping.exe"));
+    if (!pBaseAddress) {
+        printf("Finding BaseAddress for FortniteClient has failed, bailing-out immediately!\n");
+        return 0;
+    }
 
     auto pUWorldAddress = Util::FindPattern("\x48\x8B\x1D\x00\x00\x00\x00\x00\x00\x00\x10\x4C\x8D\x4D\x00\x4C", "xxx???????xxxx?x");
     if (!pUWorldAddress) {
@@ -151,6 +180,8 @@ DWORD WINAPI Main(LPVOID lpParam) {
     auto pGNameOffset = *reinterpret_cast<uint32_t*>(pGNameAddress + 3);
 
     SDK::FName::GNames = *reinterpret_cast<SDK::TNameEntryArray**>(pGNameAddress + 7 + pGNameOffset);
+
+    StaticLoadObject = reinterpret_cast<decltype(StaticLoadObject)>(pBaseAddress + 0x142E560); // TODO: Unhardcode this crap
 
     auto pPossessAddress = Util::FindPattern("\x48\x89\x5C\x24\x10\x55\x56\x57\x48\x8D\x6C\x24\x90", "xxxxxxxxxxxxx");
     if (!pPossessAddress) {
@@ -201,6 +232,13 @@ DWORD WINAPI Main(LPVOID lpParam) {
 
     AuthorityGameMode->StartPlay();
     AuthorityGameMode->StartMatch();
+
+    Sleep(5000);
+
+    SDK::UFortItemDefinition* ItemDefinition = FindOrLoadObject<SDK::UFortItemDefinition>(TEXT("/Game/Items/Weapons/Melee/Harvest/WID_Harvest_Pickaxe_C_T01.WID_Harvest_Pickaxe_C_T01"));
+
+    reinterpret_cast<SDK::AFortPlayerController*>(PlayerController)->ActivateSlot(SDK::EFortQuickBars::Primary, 0, 0.0f, true);
+    reinterpret_cast<SDK::AFortPlayerController*>(PlayerController)->AddItemToQuickBars(ItemDefinition, SDK::EFortQuickBars::Primary, 0);
 
     return 0;
 }
