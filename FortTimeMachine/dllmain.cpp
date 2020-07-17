@@ -43,6 +43,36 @@ SDK::AActor* FindActor(SDK::UClass* pClass, int iSkipCount = 0) {
     return nullptr;
 }
 
+SDK::UObject*(*StaticLoadObject)(SDK::UClass* ObjectClass, SDK::UObject* InOuter, const TCHAR* InName, const TCHAR* Filename, uint32_t LoadFlags, SDK::UPackageMap* Sandbox, bool bAllowObjectReconciliation) = nullptr;
+
+template<class T>
+T* LoadObject(SDK::UObject* Outer, const TCHAR* Name, const TCHAR* Filename = nullptr, uint32_t LoadFlags = 0, SDK::UPackageMap* Sandbox = nullptr) {
+    return (T*)StaticLoadObject(T::StaticClass(), Outer, Name, Filename, LoadFlags, Sandbox, true);
+}
+
+// TODO: Accurately match original func
+template<typename T>
+T* FindOrLoadObject(const TCHAR* PathName) {
+    //printf("HELLO_0\n");
+
+    SDK::UClass* Class = T::StaticClass();
+    Class->CreateDefaultObject(); // fuck it, create default object, no checks.
+
+    //printf("HELLO_1\n");
+
+    T* ObjectPtr = LoadObject<T>(NULL, PathName);
+
+    //printf("HELLO_2\n");
+
+    if (ObjectPtr)
+        SDK::UObject::GObjects
+            ->ObjObjects.GetItemByIndex(ObjectPtr->InternalIndex)->Flags |= int32_t(SDK::FUObjectItem::ObjectFlags::RootSet);
+
+    //printf("HELLO_3\n");
+
+    return ObjectPtr;
+}
+
 PVOID(*ProcessEvent)(SDK::UObject*, class SDK::UFunction*, PVOID) = nullptr;
 
 PVOID ProcessEventHook(SDK::UObject* object, class SDK::UFunction* function, PVOID params) {
@@ -64,6 +94,8 @@ PVOID ProcessEventHook(SDK::UObject* object, class SDK::UFunction* function, PVO
             PossessParams->pPawn = PlayerPawn_Athena_C;
 
             CreateThread(0, 0, Util::PossessWithThread, PossessParams, 0, 0);
+        } else if (function->GetName().find("ServerReturnToMainMenu") != std::string::npos) {
+            reinterpret_cast<SDK::AFortPlayerController*>(PlayerController)->ReturnToMainMenu();
         }
     }
 
@@ -79,6 +111,12 @@ DWORD WINAPI Main(LPVOID lpParam) {
     printf("Thank you all for helping, this wouldn't have been possible without you!\n");
 
     MH_Initialize();
+
+    auto pBaseAddress = (uintptr_t)GetModuleHandle(TEXT("FortniteClient-Win64-Shipping.exe"));
+    if (!pBaseAddress) {
+        printf("Finding BaseAddress for FortniteClient has failed, bailing-out immediately!\n");
+        return 0;
+    }
 
     auto pUWorldAddress = Util::FindPattern("\x48\x8B\x1D\x00\x00\x00\x00\x00\x00\x00\x10\x4C\x8D\x4D\x00\x4C", "xxx???????xxxx?x");
     if (!pUWorldAddress) {
@@ -109,6 +147,8 @@ DWORD WINAPI Main(LPVOID lpParam) {
     auto pGNameOffset = *reinterpret_cast<uint32_t*>(pGNameAddress + 3);
 
     SDK::FName::GNames = *reinterpret_cast<SDK::TNameEntryArray**>(pGNameAddress + 7 + pGNameOffset);
+
+    StaticLoadObject = reinterpret_cast<decltype(StaticLoadObject)>(pBaseAddress + 0x142E560);
 
     auto pPossessAddress = Util::FindPattern("\x48\x89\x5C\x24\x10\x55\x56\x57\x48\x8D\x6C\x24\x90", "xxxxxxxxxxxxx");
     if (!pPossessAddress) {
@@ -160,6 +200,21 @@ DWORD WINAPI Main(LPVOID lpParam) {
     AuthorityGameMode->StartPlay();
     AuthorityGameMode->StartMatch();
 
+    Sleep(5000);
+
+    //PlayerPawn_Athena_C->ServerChooseGender(SDK::EFortCustomGender::Female);
+
+    /*SDK::UTexture2D* MiniMapAthena = FindOrLoadObject<SDK::UTexture2D>(TEXT("/Game/Athena/HUD/MiniMap/MiniMapAthena.MiniMapAthena"));
+    if (!MiniMapAthena) {
+        printf("%s\n", MiniMapAthena->GetFullName().c_str());
+    } else {
+        printf("HELLO THERE, THIS FUCKING FAILED AND WAS A COMPLETE WASTE OF TIME."); // lets hope we dont hit this message lmao...
+    }*/
+
+    //PlayerPawn_Athena_C->ServerChoosePart(SDK::EFortCustomPartType::Body, CharacterPartBody);
+
+    //PlayerPawn_Athena_C->OnCharacterPartsReinitialized();
+
     return 0;
 }
 
@@ -169,4 +224,3 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved) {
 
     return true;
 }
-

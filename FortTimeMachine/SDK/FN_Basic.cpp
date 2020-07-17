@@ -9,7 +9,7 @@
 namespace SDK
 {
 TNameEntryArray* FName::GNames = nullptr;
-FUObjectArray* UObject::GObjects = nullptr;
+FUObjectArray* UObject::GObjects = nullptr; // GUObjectArray (in UE4)
 //---------------------------------------------------------------------------
 bool FWeakObjectPtr::IsValid() const
 {
