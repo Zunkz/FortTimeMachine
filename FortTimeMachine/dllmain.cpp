@@ -1,16 +1,12 @@
 #include "SDK.hpp"
 
-#include <windows.h>
-#include <inttypes.h>
+#include <Windows.h>
 #include <stdio.h>
-#include <tchar.h>
 
+#include "global.h"
 #include "util.h"
 
-#include <MinHook.h>
-#pragma comment(lib, "minhook.lib")
-
-SDK::UWorld** World;
+/*SDK::UWorld** World;
 SDK::ULevel* Level;
 
 SDK::UGameInstance* GameInstance;
@@ -21,6 +17,8 @@ SDK::ULocalPlayer* LocalPlayer;
 SDK::TArray<SDK::AActor*>* Actors;
 
 SDK::APlayerController* PlayerController;
+
+SDK::APlayerPawn_Athena_C* PlayerPawn_Athena_C;
 
 SDK::AActor* FindActor(SDK::UClass* pClass, int iSkipCount = 0) {
     int iSkipIndex = 0;
@@ -43,64 +41,94 @@ SDK::AActor* FindActor(SDK::UClass* pClass, int iSkipCount = 0) {
     return nullptr;
 }
 
-SDK::UObject*(*StaticLoadObject)(SDK::UClass* ObjectClass, SDK::UObject* InOuter, const TCHAR* InName, const TCHAR* Filename, uint32_t LoadFlags, SDK::UPackageMap* Sandbox, bool bAllowObjectReconciliation) = nullptr;
-
-template<class T>
-T* LoadObject(SDK::UObject* Outer, const TCHAR* Name, const TCHAR* Filename = nullptr, uint32_t LoadFlags = 0, SDK::UPackageMap* Sandbox = nullptr) {
-    return (T*)StaticLoadObject(T::StaticClass(), Outer, Name, Filename, LoadFlags, Sandbox, true);
-}
-
-// TODO: Accurately match original func
-template<typename T>
-T* FindOrLoadObject(const TCHAR* PathName) {
-    //printf("HELLO_0\n");
-
-    SDK::UClass* Class = T::StaticClass();
-    Class->CreateDefaultObject(); // fuck it, create default object, no checks.
-
-    //printf("HELLO_1\n");
-
-    T* ObjectPtr = LoadObject<T>(NULL, PathName);
-
-    //printf("HELLO_2\n");
-
-    if (ObjectPtr)
-        SDK::UObject::GObjects
-            ->ObjObjects.GetItemByIndex(ObjectPtr->InternalIndex)->Flags |= int32_t(SDK::FUObjectItem::ObjectFlags::RootSet);
-
-    //printf("HELLO_3\n");
-
-    return ObjectPtr;
-}
-
-PVOID(*ProcessEvent)(SDK::UObject*, class SDK::UFunction*, PVOID) = nullptr;
-
-PVOID ProcessEventHook(SDK::UObject* object, class SDK::UFunction* function, PVOID params) {
-    if (object && function) {
-        if (function->GetName().find("ServerAttemptAircraftJump") != std::string::npos) {
-            std::string ClassName = "PlayerPawn_Athena_C";
-            
-            PlayerController->CheatManager->Summon(SDK::FString(std::wstring(ClassName.begin(), ClassName.end()).c_str()));
-
-            SDK::APlayerPawn_Athena_C* PlayerPawn_Athena_C = reinterpret_cast<SDK::APlayerPawn_Athena_C*>(FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
-            if (!PlayerPawn_Athena_C) {
-                printf("Finding PlayerPawn_Athena_C has failed, bailing-out immediately!\n");
-                return 0;
-            }
-
-            pPossessParams PossessParams = (pPossessParams)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MyPossessParams));
-
-            PossessParams->pInstance = PlayerController;
-            PossessParams->pPawn = PlayerPawn_Athena_C;
-
-            CreateThread(0, 0, Util::PossessWithThread, PossessParams, 0, 0);
-        } else if (function->GetName().find("ServerReturnToMainMenu") != std::string::npos) {
-            reinterpret_cast<SDK::AFortPlayerController*>(PlayerController)->ReturnToMainMenu();
+DWORD JumpThread(LPVOID lpParam) {
+    while (1) {
+        if (GetKeyState(VK_SPACE) & 0x8000) {
+            PlayerPawn_Athena_C->Jump();
         }
+
+        // Keybind to notify the client that it has won:
+        //if (GetKeyState(VK_OEM_PLUS) & 0x8000) {
+        //    reinterpret_cast<SDK::AAthena_PlayerController_C*>(PlayerController)->ClientNotifyWon();
+        //}
+
+        Sleep(16);
+    }
+}
+
+bool bHasConnected = false;
+
+DWORD ConnectionThread(LPVOID lpParam) {
+    HANDLE hPipe;
+    char buffer[MAXSHORT];
+    DWORD dwRead;
+    DWORD dwWritten;
+
+    char simple[1];
+
+    hPipe = CreateFile(TEXT("\\\\.\\pipe\\FortTimeMachine"),
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        NULL,
+        OPEN_EXISTING,
+        0,
+        NULL);
+
+    if (hPipe != INVALID_HANDLE_VALUE) {
+        simple[0] = 0; // PipeClient_Connect
+
+        WriteFile(hPipe,
+            simple,
+            1,
+            &dwWritten,
+            NULL);
+
+        while (ReadFile(hPipe, buffer, sizeof(buffer) - 1, &dwRead, NULL) != FALSE) {
+            char id = buffer[0];
+
+            switch (id) {
+            case 1: // PipeServer_HasConnected
+                if (bHasConnected)
+                    break;
+
+                bHasConnected = true;
+
+                printf("You have connected successfully to the server!");
+                break;
+
+            case 2: // PipeServer_HasDisconnected
+                if (!bHasConnected)
+                    break;
+
+                bHasConnected = false;
+
+                printf("You have been disconnected from the server.");
+                break;
+
+            case 3: // PipeServer_HasFailed
+                if (!bHasConnected)
+                    break;
+
+                printf("Your connection the the server has failed.");
+                break;
+
+            case 10: // GameServer_Ping
+                simple[0] = 11; // GameClient_Pong
+
+                WriteFile(hPipe,
+                    simple,
+                    1,
+                    &dwWritten,
+                    NULL);
+                break;
+            }
+        }
+
+        CloseHandle(hPipe);
     }
 
-    return ProcessEvent(object, function, params);
-}
+    return 0;
+}*/
 
 DWORD WINAPI Main(LPVOID lpParam) {
     Util::InitConsole();
@@ -110,11 +138,42 @@ DWORD WINAPI Main(LPVOID lpParam) {
 
     printf("Thank you all for helping, this wouldn't have been possible without you!\n");
 
-    MH_Initialize();
+    Util::InitSdk();
 
-    auto pBaseAddress = (uintptr_t)GetModuleHandle(TEXT("FortniteClient-Win64-Shipping.exe"));
+    Global::Init();
+
+    auto PlayerPawn_Athena_C = static_cast<SDK::APlayerPawn_Athena_C*>(Util::FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
+    if (!PlayerPawn_Athena_C) {
+        printf("Finding PlayerPawn_Athena_C has failed, bailing-out immediately!\n");
+        return 0;
+    }
+
+    auto SkeletalMesh = SDK::UObject::FindObject<SDK::USkeletalMesh>("SkeletalMesh SK_M_Med_Soldier_04_ATH.SK_M_Med_Soldier_04_ATH");
+    if (SkeletalMesh == nullptr) {
+        printf("Finding SkeletalMesh has failed, bailing-out immediately!\n");
+        return 0;
+    }
+
+    PlayerPawn_Athena_C->Mesh->SetSkeletalMesh(SkeletalMesh, true);
+
+    Util::Possess(PlayerPawn_Athena_C);
+
+    Sleep(2000);
+
+    static_cast<SDK::AAthena_PlayerController_C*>(Global::pPlayerController)->ServerReadyToStartMatch();
+
+    auto AuthorityGameMode = static_cast<SDK::AFortGameModeAthena*>((*Global::pWorld)->AuthorityGameMode);
+
+    AuthorityGameMode->StartMatch();
+
+    /*printf("Aurora: Time Machine by Cyuubi, with help from others.\n");
+    printf("Credits: Crush, Taj, Samicc, Kanner, Pivot and Cendence.\n\n");
+
+    printf("Thank you all for helping, this wouldn't have been possible without you!\n");
+
+    auto pBaseAddress = reinterpret_cast<uintptr_t>(GetModuleHandle(0));
     if (!pBaseAddress) {
-        printf("Finding BaseAddress for FortniteClient has failed, bailing-out immediately!\n");
+        printf("Finding BaseAddress has failed, bailing-out immediately!\n");
         return 0;
     }
 
@@ -148,25 +207,6 @@ DWORD WINAPI Main(LPVOID lpParam) {
 
     SDK::FName::GNames = *reinterpret_cast<SDK::TNameEntryArray**>(pGNameAddress + 7 + pGNameOffset);
 
-    StaticLoadObject = reinterpret_cast<decltype(StaticLoadObject)>(pBaseAddress + 0x142E560);
-
-    auto pPossessAddress = Util::FindPattern("\x48\x89\x5C\x24\x10\x55\x56\x57\x48\x8D\x6C\x24\x90", "xxxxxxxxxxxxx");
-    if (!pPossessAddress) {
-        printf("Finding pattern for Possess has failed, bailing-out immediately!\n");
-        return 0;
-    }
-
-    Possess = reinterpret_cast<decltype(Possess)>(pPossessAddress);
-
-    auto pProcessEventAddress = Util::FindPattern("\x40\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x00\x00\x00\x00\x48\x8D\x6C\x24\x00\x48\x89\x9D\x00\x00\x00\x00\x48\x8B\x05\x00\x00\x00\x00\x48\x33\xC5\x48\x89\x85\x00\x00\x00\x00\x48\x63\x41\x0C", "xxxxxxxxxxxxxxx????xxxx?xxx????xxx????xxxxxx????xxxx");
-    if (!pProcessEventAddress) {
-        printf("Finding pattern for ProcessEvent has failed, bailing-out immediately!\n");
-        return 0;
-    }
-
-    MH_CreateHook(reinterpret_cast<LPVOID>(pProcessEventAddress), ProcessEventHook, (PVOID*)&ProcessEvent);
-    MH_EnableHook(reinterpret_cast<LPVOID>(pProcessEventAddress));
-
     Level = (*World)->PersistentLevel;
 
     GameInstance = (*World)->OwningGameInstance;
@@ -178,11 +218,19 @@ DWORD WINAPI Main(LPVOID lpParam) {
 
     PlayerController = LocalPlayer->PlayerController;
 
-    SDK::APlayerPawn_Athena_C* PlayerPawn_Athena_C = reinterpret_cast<SDK::APlayerPawn_Athena_C*>(FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
+    PlayerPawn_Athena_C = reinterpret_cast<SDK::APlayerPawn_Athena_C*>(FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
     if (!PlayerPawn_Athena_C) {
         printf("Finding PlayerPawn_Athena_C has failed, bailing-out immediately!\n");
         return 0;
     }
+
+    static auto SkeletalMesh = SDK::UObject::FindObject<SDK::USkeletalMesh>("SkeletalMesh SK_M_Med_Soldier_04_ATH.SK_M_Med_Soldier_04_ATH");
+    if (SkeletalMesh == nullptr) {
+        printf("Finding SkeletalMesh has failed, bailing-out immediately!\n");
+        return 0;
+    }
+
+    PlayerPawn_Athena_C->Mesh->SetSkeletalMesh(SkeletalMesh, true);
 
     pPossessParams PossessParams = (pPossessParams)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MyPossessParams));
 
@@ -193,27 +241,22 @@ DWORD WINAPI Main(LPVOID lpParam) {
 
     Sleep(2000);
 
-    reinterpret_cast<SDK::AFortPlayerController*>(PlayerController)->ServerReadyToStartMatch();
+    CreateThread(0, 0, JumpThread, 0, 0, 0);
+
+    reinterpret_cast<SDK::AAthena_PlayerController_C*>(PlayerController)->ServerReadyToStartMatch();
 
     SDK::AFortGameModeAthena* AuthorityGameMode = reinterpret_cast<SDK::AFortGameModeAthena*>((*World)->AuthorityGameMode);
 
-    AuthorityGameMode->StartPlay();
-    AuthorityGameMode->StartMatch();
+    AuthorityGameMode->StartMatch();*/
 
-    Sleep(5000);
-
-    //PlayerPawn_Athena_C->ServerChooseGender(SDK::EFortCustomGender::Female);
-
-    /*SDK::UTexture2D* MiniMapAthena = FindOrLoadObject<SDK::UTexture2D>(TEXT("/Game/Athena/HUD/MiniMap/MiniMapAthena.MiniMapAthena"));
-    if (!MiniMapAthena) {
-        printf("%s\n", MiniMapAthena->GetFullName().c_str());
-    } else {
-        printf("HELLO THERE, THIS FUCKING FAILED AND WAS A COMPLETE WASTE OF TIME."); // lets hope we dont hit this message lmao...
-    }*/
-
-    //PlayerPawn_Athena_C->ServerChoosePart(SDK::EFortCustomPartType::Body, CharacterPartBody);
-
-    //PlayerPawn_Athena_C->OnCharacterPartsReinitialized();
+    // Dump objects:
+    //for (int i = 0; i < SDK::UObject::GetGlobalObjects().Num(); i++) {
+    //    auto object = SDK::UObject::GetGlobalObjects().GetByIndex(i);
+    //    if (object == nullptr)
+    //        continue;
+    //
+    //    printf("Object = %s\n", object->GetFullName().c_str());
+    //}
 
     return 0;
 }
