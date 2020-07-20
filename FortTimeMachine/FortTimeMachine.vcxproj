@@ -102,9 +102,7 @@
     <ClCompile Include="SDK\FN_PlayerPawn_Athena_Generic_functions.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="global.h" />
-    <ClInclude Include="manager.h" />
-    <ClInclude Include="pipe.h" />
+    <ClInclude Include="core.h" />
     <ClInclude Include="SDK.hpp" />
     <ClInclude Include="util.h" />
   </ItemGroup>

@@ -8,21 +8,15 @@
 #include <psapi.h>
 #include <stdio.h>
 
-#include "global.h"
+#include <MinHook.h>
+#pragma comment(lib, "minhook.lib")
+
+#include "core.h"
 
 class Util {
 private:
-    typedef struct {
-        SDK::APlayerController* pInstance;
-        SDK::AActor* pPawn;
-    } PossessParams, *pPossessParams;
-
     static DWORD PossessThread(LPVOID lpParam) {
-        auto pParams = static_cast<pPossessParams>(lpParam);
-        if (!pParams)
-            return NULL;
-
-        Global::Possess(pParams->pInstance, pParams->pPawn); // TODO: Can probably be removed?
+        Core::pPlayerController->Possess(static_cast<SDK::APawn*>(lpParam));
 
         return NULL;
     }
@@ -53,7 +47,7 @@ public:
 
         auto pUWorldOffset = *reinterpret_cast<uint32_t*>(pUWorldAddress + 3);
 
-        Global::pWorld = reinterpret_cast<SDK::UWorld**>(pUWorldAddress + 7 + pUWorldOffset);
+        Core::pWorld = reinterpret_cast<SDK::UWorld**>(pUWorldAddress + 7 + pUWorldOffset);
 
         auto pGObjectAddress = Util::FindPattern("\x48\x8D\x0D\x00\x00\x00\x00\xE8\x00\x00\x00\x00\xE8\x00\x00\x00\x00\xE8\x00\x00\x00\x00\x48\x8B\xD6", "xxx????x????x????x????xxx");
         if (!pGObjectAddress) {
@@ -76,23 +70,41 @@ public:
         SDK::FName::GNames = *reinterpret_cast<SDK::TNameEntryArray**>(pGNameAddress + 7 + pGNameOffset);
     }
 
+    static VOID InitCore() {
+        if (MH_Initialize() != MH_STATUS::MH_OK) {
+            MessageBox(NULL, static_cast<LPCWSTR>(L"Initializing MinHook has failed, please re-open Fortnite and try again!"), static_cast<LPCWSTR>(L"Error"), MB_ICONERROR);
+            ExitProcess(EXIT_FAILURE);
+        }
+
+        uintptr_t pBaseAddress = Util::BaseAddress();
+        if (!pBaseAddress) {
+            MessageBox(NULL, static_cast<LPCWSTR>(L"Finding BaseAddress has failed, please re-open Fortnite and try again!"), static_cast<LPCWSTR>(L"Error"), MB_ICONERROR);
+            ExitProcess(EXIT_FAILURE);
+        }
+
+        if (!Core::pWorld) {
+            MessageBox(NULL, static_cast<LPCWSTR>(L"The UWorld is not initialized, please re-open Fortnite and try again!"), static_cast<LPCWSTR>(L"Error"), MB_ICONERROR);
+            ExitProcess(EXIT_FAILURE);
+        }
+
+        Core::pLevel = (*Core::pWorld)->PersistentLevel;
+
+        Core::pGameInstance = (*Core::pWorld)->OwningGameInstance;
+
+        Core::pLocalPlayers = Core::pGameInstance->LocalPlayers;
+        Core::pLocalPlayer = Core::pLocalPlayers[0];
+
+        Core::pActors = &Core::pLevel->Actors;
+
+        Core::pPlayerController = Core::pLocalPlayer->PlayerController;
+    }
+
     static VOID Possess(SDK::AActor* pPawn) {
-        auto pParams = static_cast<pPossessParams>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PossessParams)));
-        if (!pParams)
-            return;
-
-        pParams->pInstance = Global::pPlayerController;
-        pParams->pPawn = pPawn;
-
-        CreateThread(0, 0, Util::PossessThread, pParams, 0, 0);
+        CreateThread(0, 0, Util::PossessThread, pPawn, 0, 0);
     }
 
     static uintptr_t BaseAddress() {
-        auto pBaseAddress = reinterpret_cast<uintptr_t>(GetModuleHandle(0));
-        if (!pBaseAddress)
-            return NULL;
-
-        return pBaseAddress;
+        return reinterpret_cast<uintptr_t>(GetModuleHandle(0));
     }
 
     static PBYTE FindPattern(PVOID pBase, DWORD dwSize, LPCSTR lpPattern, LPCSTR lpMask) {
@@ -117,8 +129,8 @@ public:
     }
 
     static SDK::AActor* FindActor(SDK::UClass* pClass, int iSkip = 0) {
-        for (int i, j = 0; i < Global::pActors->Num(); i++) {
-            SDK::AActor* pActor = Global::pActors->operator[](i);
+        for (int i = 0, j = 0; i < Core::pActors->Num(); i++) {
+            SDK::AActor* pActor = Core::pActors->operator[](i);
 
             if (pActor != nullptr) {
                 if (pActor->IsA(pClass)) {
