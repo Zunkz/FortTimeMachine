@@ -15,6 +15,9 @@ namespace FortTimeMachine.Client
 
         static WebSocket _socket;
 
+        static BinaryReader _reader;
+        static BinaryWriter _writer;
+
         static void Main(string[] args)
         {
             Console.WriteLine("FortTimeMachine.Client by Cyuubi, do not distribute!");
@@ -25,67 +28,98 @@ namespace FortTimeMachine.Client
 
             var address = Console.ReadLine();
 
+            Console.WriteLine();
+
+            _socket = new WebSocket($"ws://{address}");
+            _socket.OnOpen += OnOpen;
+            _socket.OnClose += OnClose;
+            _socket.OnError += OnError;
+            _socket.OnMessage += OnMessage;
+
             Task.Factory.StartNew(() =>
             {
                 var server = new NamedPipeServerStream("FortTimeMachine");
 
                 server.WaitForConnection();
 
-                using (var reader = new BinaryReader(server))
-                using (var writer = new BinaryWriter(server))
+                _reader = new BinaryReader(server);
+                _writer = new BinaryWriter(server);
+
+                while (true)
                 {
-                    while (true)
+                    var id = _reader.ReadByte();
+
+                    switch (id)
                     {
-                        var id = reader.ReadByte();
+                        case 0: // PipeClient_Connect
+                            {
+                                Console.WriteLine("PipeClient_Connect");
 
-                        switch (id)
-                        {
-                            case 0: // PipeClient_Connect
+                                if (string.IsNullOrEmpty(address) || _isConnected)
                                 {
-                                    if (string.IsNullOrEmpty(address) || _isConnected)
-                                    {
-                                        writer.Write((byte)3); // PipeServer_HasFailed
-                                        return;
-                                    }
-
-                                    _socket = new WebSocket($"ws://{address}");
-                                    _socket.OnMessage += (sender, e) => writer.Write(e.RawData);
-                                    _socket.OnClose += (sender, e) => writer.Write((byte)2); // PipeServer_HasDisconnected
-                                    _socket.OnError += (sender, e) => writer.Write((byte)3); // PipeServer_HasFailed
-
-                                    _socket.Connect();
-
-                                    if (_socket.IsAlive)
-                                    {
-                                        _isConnected = true;
-
-                                        writer.Write((byte)1); // PipeServer_HasConnected
-                                    }
-                                    else
-                                        writer.Write((byte)3); // PipeServer_HasFailed
+                                    _writer.Write((byte)3); // PipeServer_HasFailed
+                                    _writer.Flush();
+                                    return;
                                 }
-                                break;
 
-                            default:
-                                {
-                                    if (!_isConnected)
-                                        return;
+                                _socket.Connect();
+                            }
+                            break;
 
-                                    // TODO: This is a really shitty hackjob, but it works for now.
-                                    var bytes = reader.ReadBytes(short.MaxValue);
-                                    var array = new byte[bytes.Length + 1];
+                        default:
+                            {
+                                if (!_isConnected)
+                                    return;
 
-                                    bytes.CopyTo(array, 1);
+                                // TODO: This is a really shitty hackjob, but it works for now.
+                                var bytes = _reader.ReadBytes(short.MaxValue);
+                                var array = new byte[bytes.Length + 1];
 
-                                    array[0] = id;
+                                bytes.CopyTo(array, 1);
 
-                                    _socket.Send(bytes);
-                                }
-                                break;
-                        }
+                                array[0] = id;
+
+                                _socket.Send(bytes);
+                            }
+                            break;
                     }
                 }
             });
+
+            Console.ReadKey();
+        }
+
+        static void OnOpen(object sender, EventArgs e)
+        {
+            _isConnected = true;
+
+            _writer.Write((byte)1); // PipeServer_HasConnected
+            _writer.Flush();
+        }
+
+        static void OnClose(object sender, CloseEventArgs e)
+        {
+            _isConnected = false;
+
+            _writer.Write((byte)2); // PipeServer_HasDisconnected
+            _writer.Flush();
+        }
+
+        static void OnError(object sender, WebSocketSharp.ErrorEventArgs e)
+        {
+            if (_socket.IsAlive)
+                _socket.Close();
+
+            _writer.Write((byte)3); // PipeServer_HasFailed
+            _writer.Flush();
+        }
+
+        static void OnMessage(object sender, MessageEventArgs e)
+        {
+            Console.WriteLine($"RECV {e.RawData[0]}");
+
+            _writer.Write(e.RawData);
+            _writer.Flush();
         }
     }
 }
