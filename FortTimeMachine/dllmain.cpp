@@ -59,151 +59,6 @@ DWORD MiscThread(LPVOID lpParam) {
     return NULL;
 }
 
-bool bHasConnected = false;
-
-DWORD ConnectionThread(LPVOID lpParam) {
-    HANDLE hPipe;
-
-    char acBuffer[MAXSHORT];
-
-    DWORD dwRead;
-    DWORD dwWritten;
-
-    char acCommon[1];
-    char acPosition[1 + sizeof(SDK::FRotator) + sizeof(SDK::FVector)];
-
-    hPipe = CreateFile(TEXT("\\\\.\\pipe\\FortTimeMachine"),
-        GENERIC_READ | GENERIC_WRITE,
-        0,
-        NULL,
-        OPEN_EXISTING,
-        0,
-        NULL);
-
-    std::string sClassName = "PlayerPawn_Athena_C";
-
-    auto pSkeletalMesh = SDK::UObject::FindObject<SDK::USkeletalMesh>("SkeletalMesh SK_M_Med_Soldier_04_ATH.SK_M_Med_Soldier_04_ATH");
-    if (pSkeletalMesh == nullptr) {
-        printf("Finding SkeletalMesh has failed, bailing-out immediately!\n");
-        return 0;
-    }
-
-    if (hPipe != INVALID_HANDLE_VALUE) {
-        acCommon[0] = 0; // PipeClient_Connect
-
-        WriteFile(hPipe,
-            acCommon,
-            1,
-            &dwWritten,
-            NULL);
-
-        while (ReadFile(hPipe, acBuffer, sizeof(acBuffer) - 1, &dwRead, NULL) != FALSE) {
-            printf("ID = %i\n", acBuffer[0]);
-
-            char cId = acBuffer[0];
-
-            if (cId == 1) { // PipeServer_HasConnected
-                if (bHasConnected)
-                    continue;
-
-                bHasConnected = true;
-
-                printf("You have connected successfully to the server!\n");
-            } else if (cId == 2) { // PipeServer_HasDisconnected
-                if (!bHasConnected)
-                    continue;
-
-                bHasConnected = false;
-
-                printf("You have been disconnected from the server.\n");
-            } else if (cId == 3) // PipeServer_HasFailed
-                printf("Your connection the the server has failed.\n");
-
-            else if (cId == 10) { // GameServer_Ping
-                acCommon[0] = 11; // GameClient_Pong
-
-                WriteFile(hPipe,
-                    acCommon,
-                    1,
-                    &dwWritten,
-                    NULL);
-            } else if (cId == 12) { // GameServer_SummonOurPawn
-                Core::pPlayerController->CheatManager->Summon(SDK::FString(std::wstring(sClassName.begin(), sClassName.end()).c_str()));
-
-                pPlayerPawn_Athena_C_0 = static_cast<SDK::APlayerPawn_Athena_C*>(Util::FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
-                if (!pPlayerPawn_Athena_C_0) {
-                    printf("Finding PlayerPawn_Athena_C_0 has failed, bailing-out immediately!\n");
-                    return NULL;
-                }
-
-                pPlayerPawn_Athena_C_0->bIsInvulnerable = true;
-
-                pPlayerPawn_Athena_C_0->Mesh->SetSkeletalMesh(pSkeletalMesh, true);
-
-                acCommon[0] = 13; // GameClient_OurPawnSummoned
-
-                WriteFile(hPipe,
-                    acCommon,
-                    1,
-                    &dwWritten,
-                    NULL);
-            } else if (cId == 14) { // GameServer_SummonOtherPawn
-                Core::pPlayerController->CheatManager->Summon(SDK::FString(std::wstring(sClassName.begin(), sClassName.end()).c_str()));
-
-                pPlayerPawn_Athena_C_1 = static_cast<SDK::APlayerPawn_Athena_C*>(Util::FindActor(SDK::APlayerPawn_Athena_C::StaticClass(), 1));
-                if (!pPlayerPawn_Athena_C_1) {
-                    printf("Finding PlayerPawn_Athena_C_1 has failed, bailing-out immediately!\n");
-                    return NULL;
-                }
-
-                pPlayerPawn_Athena_C_1->bIsInvulnerable = true;
-
-                pPlayerPawn_Athena_C_1->Mesh->SetSkeletalMesh(pSkeletalMesh, true);
-
-                acCommon[0] = 15; // GameClient_OtherPawnSummoned
-
-                WriteFile(hPipe,
-                    acCommon,
-                    1,
-                    &dwWritten,
-                    NULL);
-            } else if (cId == 16) { // GameServer_PossessOurPawn
-                Util::Possess(pPlayerPawn_Athena_C_0);
-
-                CreateThread(0, 0, MiscThread, 0, 0, 0);
-
-                acCommon[0] = 17; // GameClient_OurPawnPossessed
-
-                WriteFile(hPipe,
-                    acCommon,
-                    1,
-                    &dwWritten,
-                    NULL);
-            } else if (cId == 20) { // GameServer_StartMatch
-                static_cast<SDK::AAthena_PlayerController_C*>(Core::pPlayerController)->ServerReadyToStartMatch();
-
-                auto pAuthorityGameMode = static_cast<SDK::AFortGameModeAthena*>((*Core::pWorld)->AuthorityGameMode);
-
-                pAuthorityGameMode->StartMatch();
-
-                acCommon[0] = 21; // GameClient_MatchStarted
-
-                WriteFile(hPipe,
-                    acCommon,
-                    1,
-                    &dwWritten,
-                    NULL);
-            }
-        }
-
-        printf("Closed.\n");
-
-        CloseHandle(hPipe);
-    }
-
-    return NULL;
-}
-
 DWORD WINAPI Main(LPVOID lpParam) {
     Util::InitConsole();
 
@@ -221,10 +76,34 @@ DWORD WINAPI Main(LPVOID lpParam) {
         ExitProcess(EXIT_FAILURE);
     }
 
-    //MH_CreateHook(static_cast<LPVOID>(pProcessEventAddress), ProcessEventHook, reinterpret_cast<LPVOID*>(&ProcessEvent));
-    //MH_EnableHook(static_cast<LPVOID>(pProcessEventAddress));
+    MH_CreateHook(static_cast<LPVOID>(pProcessEventAddress), ProcessEventHook, reinterpret_cast<LPVOID*>(&ProcessEvent));
+    MH_EnableHook(static_cast<LPVOID>(pProcessEventAddress));
 
-    CreateThread(0, 0, ConnectionThread, 0, 0, 0);
+    pPlayerPawn_Athena_C_0 = static_cast<SDK::APlayerPawn_Athena_C*>(Util::FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
+    if (!pPlayerPawn_Athena_C_0) {
+        printf("Finding PlayerPawn_Athena_C has failed, bailing-out immediately!\n");
+        return 0;
+    }
+
+    auto pSkeletalMesh = SDK::UObject::FindObject<SDK::USkeletalMesh>("SkeletalMesh SK_M_Med_Soldier_04_ATH.SK_M_Med_Soldier_04_ATH");
+    if (pSkeletalMesh == nullptr) {
+        printf("Finding SkeletalMesh has failed, bailing-out immediately!\n");
+        return 0;
+    }
+
+    pPlayerPawn_Athena_C_0->Mesh->SetSkeletalMesh(pSkeletalMesh, true);
+
+    Util::Possess(pPlayerPawn_Athena_C_0);
+
+    CreateThread(0, 0, MiscThread, 0, 0, 0);
+
+    Sleep(2000);
+
+    static_cast<SDK::AAthena_PlayerController_C*>(Core::pPlayerController)->ServerReadyToStartMatch();
+
+    auto pAuthorityGameMode = static_cast<SDK::AFortGameModeAthena*>((*Core::pWorld)->AuthorityGameMode);
+
+    pAuthorityGameMode->StartMatch();
 
     return NULL;
 }
