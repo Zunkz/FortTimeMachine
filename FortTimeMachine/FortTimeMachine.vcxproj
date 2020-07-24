@@ -93,18 +93,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="SDK\FN_Athena_PlayerCameraModeBase_functions.cpp" />
-    <ClCompile Include="SDK\FN_Athena_PlayerCameraModeMelee_functions.cpp" />
     <ClCompile Include="SDK\FN_Athena_PlayerController_functions.cpp" />
     <ClCompile Include="SDK\FN_Basic.cpp" />
     <ClCompile Include="SDK\FN_CoreUObject_functions.cpp" />
     <ClCompile Include="SDK\FN_Engine_functions.cpp" />
     <ClCompile Include="SDK\FN_FortniteGame_functions.cpp" />
-    <ClCompile Include="SDK\FN_MainPlayerCamera_functions.cpp" />
     <ClCompile Include="SDK\FN_PlayerPawn_Athena_functions.cpp" />
     <ClCompile Include="SDK\FN_PlayerPawn_Athena_Generic_functions.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="core.h" />
     <ClInclude Include="SDK.hpp" />
     <ClInclude Include="util.h" />
   </ItemGroup>
