@@ -128,7 +128,7 @@ DWORD WINAPI Main(LPVOID lpParam) {
     Util::InitConsole();
 
     printf("Aurora: Time Machine by Cyuubi, with help from others.\n");
-    printf("Credits: Crush, Taj, Samicc, Kanner, Pivot and Cendence.\n\n");
+    printf("Credits: Taj, Samicc, Kanner and Pivot.\n\n");
 
     printf("Thank you all for helping, this wouldn't have been possible without you!\n");
 
