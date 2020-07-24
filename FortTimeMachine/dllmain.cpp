@@ -9,34 +9,88 @@
 #include "core.h"
 #include "util.h"
 
-SDK::APlayerPawn_Athena_C* pPlayerPawn_Athena_C_0; // Our pawn.
-SDK::APlayerPawn_Athena_C* pPlayerPawn_Athena_C_1; // Other pawn.
+SDK::APlayerPawn_Athena_C* pPlayerPawn_Athena_C;
 
 PVOID(*ProcessEvent)(SDK::UObject*, SDK::UFunction*, PVOID) = nullptr;
 
 PVOID ProcessEventHook(SDK::UObject* pObject, SDK::UFunction* pFunction, PVOID pParams) {
     if (pObject && pFunction) {
         if (pFunction->GetName().find("ServerAttemptAircraftJump") != std::string::npos) {
-            std::string sClassName = "PlayerPawn_Athena_C";
+            SDK::FVector actorLocation = Core::pPlayerController->K2_GetActorLocation();
+            Core::pPlayerController->CheatManager->BugItGo(actorLocation.X, actorLocation.Y, actorLocation.Z, 0, 0, 0);
 
+            std::string sClassName = "PlayerPawn_Athena_C";
             Core::pPlayerController->CheatManager->Summon(SDK::FString(std::wstring(sClassName.begin(), sClassName.end()).c_str()));
 
-            pPlayerPawn_Athena_C_0 = static_cast<SDK::APlayerPawn_Athena_C*>(Util::FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
-            if (!pPlayerPawn_Athena_C_0) {
+            pPlayerPawn_Athena_C = static_cast<SDK::APlayerPawn_Athena_C*>(Util::FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
+            if (!pPlayerPawn_Athena_C)
                 printf("Finding PlayerPawn_Athena_C has failed, bailing-out immediately!\n");
-                return NULL;
+            else {
+                auto pSkeletalMesh = SDK::UObject::FindObject<SDK::USkeletalMesh>("SkeletalMesh F_SML_Starter_Epic.F_SML_Starter_Epic");
+                if (pSkeletalMesh == nullptr)
+                    printf("Finding SkeletalMesh has failed, bailing-out immediately!\n");
+                else {
+                    pPlayerPawn_Athena_C->Mesh->SetSkeletalMesh(pSkeletalMesh, true);
+
+                    Core::pPlayerController->Possess(pPlayerPawn_Athena_C);
+                }
             }
-
-            auto pSkeletalMesh = SDK::UObject::FindObject<SDK::USkeletalMesh>("SkeletalMesh SK_M_Med_Soldier_04_ATH.SK_M_Med_Soldier_04_ATH");
-            if (pSkeletalMesh == nullptr) {
-                printf("Finding SkeletalMesh has failed, bailing-out immediately!\n");
-                return NULL;
-            }
-
-            pPlayerPawn_Athena_C_0->Mesh->SetSkeletalMesh(pSkeletalMesh, true);
-
-            Core::pPlayerController->Possess(pPlayerPawn_Athena_C_0);
         }
+
+        // HACK: This will probably cause a crash, but it's worth a try.
+        if (pFunction->GetName().find("StopHoldProgress") != std::string::npos)
+            return NULL;
+
+        // Code to print out function calls:
+        /*bool bInvalidate = false;
+
+        if (pFunction->GetName().find("RecieveTick") != std::string::npos)
+            bInvalidate = true;
+        if (pFunction->GetName().find("ReceiveTick") != std::string::npos)
+            bInvalidate = true;
+        if (pFunction->GetName().find("BlueprintUpdateAnimation") != std::string::npos)
+            bInvalidate = true;
+        if (pFunction->GetName().find("BlueprintPostEvaluateAnimation") != std::string::npos)
+            bInvalidate = true;
+        if (pFunction->GetName().find("ExecuteUbergraph") != std::string::npos)
+            bInvalidate = true;
+        if (pFunction->GetName().find("Loop Animation Curve") != std::string::npos)
+            bInvalidate = true;
+        if (pFunction->GetName().find("OnMouseEnter") != std::string::npos)
+            bInvalidate = true;
+        if (pFunction->GetName().find("OnMouseLeave") != std::string::npos)
+            bInvalidate = true;
+        if (pFunction->GetName().find("OnMouseMove") != std::string::npos)
+            bInvalidate = true;
+        if (pFunction->GetName() == "Tick")
+            bInvalidate = true;
+        if (pFunction->GetName() == "GetValue")
+            bInvalidate = true;
+        if (pFunction->GetName() == "OnPaint")
+            bInvalidate = true;
+        if (pFunction->GetName() == "ReadyToEndMatch")
+            bInvalidate = true;
+        if (pFunction->GetName() == "OnUpdateDirectionalLightForTimeOfDay")
+            bInvalidate = true;
+        if (pFunction->GetName() == "ContrailCheck")
+            bInvalidate = true;
+        if (pFunction->GetName() == "ReceiveDrawHUD")
+            bInvalidate = true;
+        if (pFunction->GetName() == "ShouldShowEmptyImage")
+            bInvalidate = true;
+        if (pFunction->GetName() == "GetSubtitleVisibility")
+            bInvalidate = true;
+        if (pFunction->GetName() == "Clown Spinner")
+            bInvalidate = true;
+        if (pFunction->GetName() == "StartTickingIfRendered")
+            bInvalidate = true;
+        if (pFunction->GetName() == "BlueprintModifyCamera")
+            bInvalidate = true;
+        if (pFunction->GetName() == "BlueprintModifyPostProcess")
+            bInvalidate = true;
+
+        if (!bInvalidate)
+            printf("%s %s\n", pObject->GetFullName().c_str(), pFunction->GetFullName().c_str());*/
     }
 
     return ProcessEvent(pObject, pFunction, pParams);
@@ -44,14 +98,25 @@ PVOID ProcessEventHook(SDK::UObject* pObject, SDK::UFunction* pFunction, PVOID p
 
 DWORD MiscThread(LPVOID lpParam) {
     while (1) {
-        if (GetKeyState(VK_SPACE) & 0x8000 && pPlayerPawn_Athena_C_0) {
-            pPlayerPawn_Athena_C_0->Jump();
+        // Keybind to jump:
+        if (GetKeyState(VK_OEM_PLUS) & 0x8000 && pPlayerPawn_Athena_C) {
+            if (!pPlayerPawn_Athena_C->bIsSkydiving) {
+                if (!pPlayerPawn_Athena_C->IsJumpProvidingForce())
+                    pPlayerPawn_Athena_C->Jump();
+            }
         }
 
-        // Keybind to notify the client that it has won:
-        //if (GetKeyState(VK_OEM_PLUS) & 0x8000) {
-        //    reinterpret_cast<SDK::AAthena_PlayerController_C*>(PlayerController)->ClientNotifyWon();
-        //}
+        // Keybind to equip weapon:
+        if (GetKeyState(VK_END) & 0x8000 && pPlayerPawn_Athena_C) {
+            auto pFortWeapon = static_cast<SDK::AFortWeapon*>(Util::FindActor(SDK::AFortWeapon::StaticClass()));
+            if (!pFortWeapon)
+                printf("Finding FortWeapon has failed, bailing-out immediately!\n");
+            else {
+                pFortWeapon->ClientGivenTo(pPlayerPawn_Athena_C);
+
+                pPlayerPawn_Athena_C->ClientInternalEquipWeapon(pFortWeapon);
+            }
+        }
 
         Sleep(1000 / 60);
     }
@@ -79,31 +144,28 @@ DWORD WINAPI Main(LPVOID lpParam) {
     MH_CreateHook(static_cast<LPVOID>(pProcessEventAddress), ProcessEventHook, reinterpret_cast<LPVOID*>(&ProcessEvent));
     MH_EnableHook(static_cast<LPVOID>(pProcessEventAddress));
 
-    pPlayerPawn_Athena_C_0 = static_cast<SDK::APlayerPawn_Athena_C*>(Util::FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
-    if (!pPlayerPawn_Athena_C_0) {
+    pPlayerPawn_Athena_C = static_cast<SDK::APlayerPawn_Athena_C*>(Util::FindActor(SDK::APlayerPawn_Athena_C::StaticClass()));
+    if (!pPlayerPawn_Athena_C)
         printf("Finding PlayerPawn_Athena_C has failed, bailing-out immediately!\n");
-        return 0;
+    else {
+        auto pSkeletalMesh = SDK::UObject::FindObject<SDK::USkeletalMesh>("SkeletalMesh F_SML_Starter_Epic.F_SML_Starter_Epic");
+        if (!pSkeletalMesh)
+            printf("Finding SkeletalMesh has failed, bailing-out immediately!\n");
+        else {
+            pPlayerPawn_Athena_C->Mesh->SetSkeletalMesh(pSkeletalMesh, true);
+
+            Util::Possess(pPlayerPawn_Athena_C);
+
+            CreateThread(0, 0, MiscThread, 0, 0, 0);
+
+            Sleep(2000);
+
+            static_cast<SDK::AAthena_PlayerController_C*>(Core::pPlayerController)->ServerReadyToStartMatch();
+
+            auto pAuthorityGameMode = static_cast<SDK::AFortGameModeAthena*>((*Core::pWorld)->AuthorityGameMode);
+            pAuthorityGameMode->StartMatch();
+        }
     }
-
-    auto pSkeletalMesh = SDK::UObject::FindObject<SDK::USkeletalMesh>("SkeletalMesh SK_M_Med_Soldier_04_ATH.SK_M_Med_Soldier_04_ATH");
-    if (pSkeletalMesh == nullptr) {
-        printf("Finding SkeletalMesh has failed, bailing-out immediately!\n");
-        return 0;
-    }
-
-    pPlayerPawn_Athena_C_0->Mesh->SetSkeletalMesh(pSkeletalMesh, true);
-
-    Util::Possess(pPlayerPawn_Athena_C_0);
-
-    CreateThread(0, 0, MiscThread, 0, 0, 0);
-
-    Sleep(2000);
-
-    static_cast<SDK::AAthena_PlayerController_C*>(Core::pPlayerController)->ServerReadyToStartMatch();
-
-    auto pAuthorityGameMode = static_cast<SDK::AFortGameModeAthena*>((*Core::pWorld)->AuthorityGameMode);
-
-    pAuthorityGameMode->StartMatch();
 
     return NULL;
 }

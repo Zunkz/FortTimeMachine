@@ -7,8 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FortTimeMachine", "FortTime
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "websocket-sharp", "websocket-sharp\websocket-sharp\websocket-sharp.csproj", "{CE7C6F7D-E907-4FC4-99F9-E4D2D6B8B228}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FortTimeMachine.Client", "FortTimeMachine.Client\FortTimeMachine.Client.csproj", "{3CF567E9-FDA6-4DA4-932B-01874C2D6927}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -23,10 +21,6 @@ Global
 		{CE7C6F7D-E907-4FC4-99F9-E4D2D6B8B228}.Debug|x64.Build.0 = Debug|Any CPU
 		{CE7C6F7D-E907-4FC4-99F9-E4D2D6B8B228}.Release|x64.ActiveCfg = Release|Any CPU
 		{CE7C6F7D-E907-4FC4-99F9-E4D2D6B8B228}.Release|x64.Build.0 = Release|Any CPU
-		{3CF567E9-FDA6-4DA4-932B-01874C2D6927}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{3CF567E9-FDA6-4DA4-932B-01874C2D6927}.Debug|x64.Build.0 = Debug|Any CPU
-		{3CF567E9-FDA6-4DA4-932B-01874C2D6927}.Release|x64.ActiveCfg = Release|Any CPU
-		{3CF567E9-FDA6-4DA4-932B-01874C2D6927}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
